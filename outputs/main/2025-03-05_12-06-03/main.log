@@ -1,0 +1,8 @@
+[2025-03-05 12:06:03,325][runners.base][INFO] - run extract_frame
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-1 already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-2 already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-3 already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-4 already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/birdsye already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-5 already exists. skip extracting frames
+[2025-03-05 12:06:03,326][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-6 already exists. skip extracting frames

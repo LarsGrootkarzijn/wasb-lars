@@ -12,8 +12,8 @@ log = logging.getLogger(__name__)
 def main(
         cfg: DictConfig
 ):
-    # print(OmegaConf.to_yaml(cfg))
-    # print(cfg)
+    print(OmegaConf.to_yaml(cfg))
+    #print(cfg)
     if cfg['output_dir'] is None:
         cfg['output_dir'] = HydraConfig.get().run.dir
     mkdir_if_missing(cfg['output_dir'])

@@ -6,6 +6,7 @@ from hydra.core.hydra_config import HydraConfig
 # from .train_and_test import Trainer
 from .eval import VideosInferenceRunner
 from .extract_frame import ExtractFrameRunner
+from .inference_only import InferenceRunner
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ __runner_factory = {
     #'train': Trainer,
     'eval': VideosInferenceRunner,
     'extract_frame': ExtractFrameRunner,
+    "inference": InferenceRunner
         }
 
 def select_runner(

@@ -1,0 +1,14 @@
+defaults:
+  - _self_
+  - runner: inference
+  - dataset: my_dataset
+  - model: wasb
+  - dataloader: default
+  - detector: tracknetv2
+  - transform: default
+  - tracker: online
+hydra:
+  run:
+    dir: ./outputs/main/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+output_dir:
+seed: 1234

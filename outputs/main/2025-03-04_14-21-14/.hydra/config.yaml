@@ -1,0 +1,190 @@
+output_dir: /home/lars/WASB-SBDT/outputs
+seed: 1234
+runner:
+  name: eval
+  device: cpu
+  gpus:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  vis_result: false
+  vis_hm: false
+  vis_traj: false
+  model_path: null
+  split: test
+  fp1_filename: null
+  eval:
+    score_threshold: 0.5
+    dist_threshold: 4
+dataset:
+  name: soccer
+  root_dir: /home/lars/WASB-SBDT/datasets/soccer
+  video_dirname: videos
+  frame_dirname: frames
+  anno_dirname: annos
+  img_ext: .png
+  video_ext: .avi
+  train:
+    videos:
+    - ID-1
+    - ID-2
+    - ID-3
+    - ID-4
+    num_clip_ratio: 1.0
+  test:
+    videos:
+    - ID-5
+    - ID-6
+    num_clip_ratio: 1.0
+model:
+  name: hrnet
+  frames_in: 3
+  frames_out: 3
+  inp_height: 288
+  inp_width: 512
+  out_height: 288
+  out_width: 512
+  rgb_diff: false
+  out_scales:
+  - 0
+  MODEL:
+    EXTRA:
+      FINAL_CONV_KERNEL: 1
+      PRETRAINED_LAYERS:
+      - '*'
+      STEM:
+        INPLANES: 64
+        STRIDES:
+        - 1
+        - 1
+      STAGE1:
+        NUM_MODULES: 1
+        NUM_BRANCHES: 1
+        BLOCK: BOTTLENECK
+        NUM_BLOCKS:
+        - 1
+        NUM_CHANNELS:
+        - 32
+        FUSE_METHOD: SUM
+      STAGE2:
+        NUM_MODULES: 1
+        NUM_BRANCHES: 2
+        BLOCK: BASIC
+        NUM_BLOCKS:
+        - 2
+        - 2
+        NUM_CHANNELS:
+        - 16
+        - 32
+        FUSE_METHOD: SUM
+      STAGE3:
+        NUM_MODULES: 1
+        NUM_BRANCHES: 3
+        BLOCK: BASIC
+        NUM_BLOCKS:
+        - 2
+        - 2
+        - 2
+        NUM_CHANNELS:
+        - 16
+        - 32
+        - 64
+        FUSE_METHOD: SUM
+      STAGE4:
+        NUM_MODULES: 1
+        NUM_BRANCHES: 4
+        BLOCK: BASIC
+        NUM_BLOCKS:
+        - 2
+        - 2
+        - 2
+        - 2
+        NUM_CHANNELS:
+        - 16
+        - 32
+        - 64
+        - 128
+        FUSE_METHOD: SUM
+      DECONV:
+        NUM_DECONVS: 0
+        KERNEL_SIZE: []
+        NUM_BASIC_BLOCKS: 2
+    INIT_WEIGHTS: true
+dataloader:
+  train: false
+  test: false
+  train_clip: false
+  test_clip: true
+  sampler:
+    name: random
+    train_batch_size: 8
+    train_shuffle_batch: true
+    train_drop_last: true
+    test_batch_size: 8
+    test_shuffle_batch: false
+    test_drop_last: false
+    inference_video_batch_size: 8
+    inference_video_shuffle_batch: false
+    inference_video_drop_last: false
+  train_num_workers: 8
+  test_num_workers: 8
+  inference_video_num_workers: 8
+  heatmap:
+    name: binary_fixed_size
+    sigmas:
+    - 2.5
+    mags:
+    - 1.0
+    min_value: 0.6
+detector:
+  name: tracknetv2
+  model_path: ../pretrained_weights/wasb_soccer_best.pth.tar
+  step: 3
+  postprocessor:
+    name: tracknetv2
+    score_threshold: 0.5
+    scales:
+    - 0
+    blob_det_method: concomp
+    use_hm_weight: true
+transform:
+  train:
+    color_jitter:
+      p: 0.0
+      brightness: 0.0
+      contrast: 0.0
+      saturation: 0.0
+      hue: 0.0
+    horizontal_flip:
+      p: 0.0
+    crop:
+      p: 0.0
+      max_rescale: 0.125
+  test:
+    color_jitter:
+      p: 0.0
+      brightness: 0.0
+      contrast: 0.0
+      saturation: 0.0
+      hue: 0.0
+    horizontal_flip:
+      p: 0.0
+    crop:
+      p: 0.0
+      max_rescale: 0.125
+tracker:
+  name: online
+  max_disp: 300

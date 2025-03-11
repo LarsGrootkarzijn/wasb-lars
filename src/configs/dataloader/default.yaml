@@ -2,7 +2,7 @@ train: False
 test: False
 train_clip: False
 test_clip: True
-#inference_video: True
+inference_video: True
 sampler:
         name: random
         train_batch_size: 8
@@ -14,9 +14,9 @@ sampler:
         inference_video_batch_size: 8
         inference_video_shuffle_batch: False
         inference_video_drop_last: False
-train_num_workers: 8
-test_num_workers: 8
-inference_video_num_workers: 8
+train_num_workers: 16
+test_num_workers: 16
+inference_video_num_workers: 16
 heatmap:
         name: binary_fixed_size
         sigmas: [2.5]

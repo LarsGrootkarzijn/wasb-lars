@@ -1,0 +1,11 @@
+[2025-03-05 14:09:58,303][runners.base][INFO] - run inference
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - => Soccer loaded
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - Dataset statistics:
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - subset     | # batch | # frame | # frame w/ gt | # clip | # game | disp.[pixel]
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - 0_top |     300 |     900 |           900 |        |        | 7.1+/-4.7
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - all    |     300 |     900 |           900 |      1 |        | 7.1+/-4.7
+[2025-03-05 14:09:58,311][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 14:09:58,352][runners.inference_only][INFO] - Running inference on match=0, clip=top
+[2025-03-05 14:17:03,657][runners.inference_only][INFO] - Generated video: ./outputs/custom_eval/2025-03-05_14-09-58/0_top.mp4

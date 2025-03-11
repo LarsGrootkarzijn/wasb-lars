@@ -1,0 +1,15 @@
+name: inference
+device: cpu
+gpus: []
+vis_result: True
+vis_hm: False
+vis_traj: False
+fp1_filename:
+model_path: ../pretrained_weights/wasb_tennis_best.pth.tar  # Or any other model you want to use
+split: test
+eval:
+  score_threshold: 0.5
+  dist_threshold: 4
+train_num_workers: 0
+test_num_workers: 0
+inference_video_num_workers: 0

@@ -1,0 +1,14 @@
+[2025-03-05 13:40:55,299][runners.base][INFO] - run inference
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - => Soccer loaded
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - Dataset statistics:
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - subset     | # batch | # frame | # frame w/ gt | # clip | # game | disp.[pixel]
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - 0_birdeye |     400 |    1200 |          1200 |        |        | 9.4+/-8.4
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - 0_ID-1 |     999 |    2997 |          2997 |        |        | 13.4+/-10.0
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - all    |    1399 |    4197 |          4197 |      2 |        | 12.5+/-9.8
+[2025-03-05 13:40:55,325][datasets.soccer][INFO] - -----------------------------------------------------------------------------------
+[2025-03-05 13:40:55,359][runners.inference_only][INFO] - Running inference on match=0, clip=birdeye
+[2025-03-05 13:45:01,456][runners.inference_only][INFO] - Generated video: ./outputs/custom_eval/2025-03-05_13-40-55/0_birdeye.mp4
+[2025-03-05 13:45:01,463][runners.inference_only][INFO] - Running inference on match=0, clip=ID-1
+[2025-03-05 13:54:50,211][runners.inference_only][INFO] - Generated video: ./outputs/custom_eval/2025-03-05_13-40-55/0_ID-1.mp4

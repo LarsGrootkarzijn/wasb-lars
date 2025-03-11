@@ -1,10 +1,10 @@
 name: soccer
-root_dir: /root/datasets/soccer
+root_dir: /home/lars/WASB-SBDT/datasets/soccer
 video_dirname: videos
 frame_dirname: frames
 anno_dirname: annos
 img_ext: '.png'
-video_ext: '.avi'
+video_ext: '.mp4'
 train:
   videos:
     - ID-1
@@ -14,7 +14,6 @@ train:
   num_clip_ratio: 1.0
 test:
   videos:
-    - ID-5
-    - ID-6
+    - wide
   num_clip_ratio: 1.0
 

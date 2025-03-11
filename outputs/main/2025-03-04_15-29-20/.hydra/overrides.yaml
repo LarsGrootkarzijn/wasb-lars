@@ -1,0 +1,3 @@
+- dataset=soccer
+- model=wasb
+- detector.model_path=../pretrained_weights/wasb_soccer_best.pth.tar

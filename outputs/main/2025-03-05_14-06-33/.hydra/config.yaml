@@ -1,0 +1,24 @@
+output_dir: null
+seed: 1234
+runner:
+  name: extract_frame
+  overwrite: false
+dataset:
+  name: soccer
+  root_dir: /home/lars/WASB-SBDT/datasets/soccer
+  video_dirname: videos
+  frame_dirname: frames
+  anno_dirname: annos
+  img_ext: .png
+  video_ext: .mp4
+  train:
+    videos:
+    - ID-1
+    - ID-2
+    - ID-3
+    - ID-4
+    num_clip_ratio: 1.0
+  test:
+    videos:
+    - top
+    num_clip_ratio: 1.0

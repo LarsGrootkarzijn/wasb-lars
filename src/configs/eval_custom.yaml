@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+  - runner: inference  # Use the custom inference runner
+  - dataset: soccer
+  - model: wasb
+  - dataloader: default
+  - detector: tracknetv2
+  - transform: default
+  - tracker: online
+hydra:
+  run:
+    dir: ./outputs/custom_eval/${now:%Y-%m-%d_%H-%M-%S} # custom_eval directory in outputs
+  job:
+    chdir: true
+  # searchpath:
+  #   - pkg://configs
+  #   # - ${hydra.searchpath}
+output_dir:
+seed: 1234

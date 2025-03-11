@@ -1,6 +1,7 @@
 #!/bin/bash
+. /home/lars/WASB-SBDT/myenv/bin/activate
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
-BASE_DIR=$SCRIPT_DIR/../..
+BASE_DIR=/home/lars/WASB-SBDT/
 
 mkdir -p ${BASE_DIR}/datasets/soccer/videos
 

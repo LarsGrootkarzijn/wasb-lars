@@ -1,0 +1,8 @@
+[2025-03-05 12:06:35,925][runners.base][INFO] - run extract_frame
+[2025-03-05 12:06:35,926][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-1 already exists. skip extracting frames
+[2025-03-05 12:06:35,926][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-2 already exists. skip extracting frames
+[2025-03-05 12:06:35,926][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-3 already exists. skip extracting frames
+[2025-03-05 12:06:35,926][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-4 already exists. skip extracting frames
+[2025-03-05 12:06:35,926][runners.extract_frame][INFO] - extract frames in /home/lars/WASB-SBDT/datasets/soccer/videos/birdeye.avi to /home/lars/WASB-SBDT/datasets/soccer/frames/birdeye
+[2025-03-05 12:07:27,623][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-5 already exists. skip extracting frames
+[2025-03-05 12:07:27,623][runners.extract_frame][INFO] - /home/lars/WASB-SBDT/datasets/soccer/frames/ID-6 already exists. skip extracting frames
