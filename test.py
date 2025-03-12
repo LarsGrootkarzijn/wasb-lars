@@ -1,133 +1,182 @@
-import xml.etree.ElementTree as ET
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import cv2
+import os
 
-# Load the XML file
-file_path = "/home/lars/WASB-SBDT/datasets/soccer/annos/ID-3.xml"  # Update with the correct path if necessary
-tree = ET.parse(file_path)
-root = tree.getroot()
+# File paths
+csv_file_path = '/home/lars/WASB-SBDT/ball_with_flat_headers.csv'  # Replace with your actual CSV path
+video_file_path = '/home/lars/Downloads/archive(3)/top_view/videos/D_20220220_1_0000_0030.mp4'  # Replace with the actual video path
 
-# Extract frame numbers and positions of the football
-data = []
-for track in root.findall(".//track[@label='ball']"):
-    for point in track.findall("points"):
-        frame = int(point.get("frame"))
-        coords = point.get("points").split(",")
-        x, y = float(coords[0]), float(coords[1])
-        data.append([frame, x, y])
+# Load the CSV file
+df = pd.read_csv(csv_file_path)
 
-# Convert to pandas DataFrame
-df = pd.DataFrame(data, columns=["Frame", "X", "Y"])
+# Assuming the same steps from before (calculating velocity and acceleration)
+frame_rate = 30
+df['dx'] = df['bb_left'].diff()  # Difference in bb_left (horizontal movement)
+df['dy'] = df['bb_top'].diff()   # Difference in bb_top (vertical movement)
+df['time_seconds'] = df['frame'] / frame_rate  # Convert frame to time in seconds
+df['Vx'] = df['dx'] / (1 / frame_rate)  # Horizontal velocity (pixels/sec)
+df['Vy'] = df['dy'] / (1 / frame_rate)  # Vertical velocity (pixels/sec)
+df['velocity'] = np.sqrt(df['Vx']**2 + df['Vy']**2)
+df['dV'] = df['velocity'].diff()  # Change in velocity
+df['dt'] = df['time_seconds'].diff()  # Time difference
+df['acceleration'] = df['dV'] / df['dt']  # Calculate acceleration
 
-# Sort DataFrame by frame number
-df = df.sort_values(by="Frame").reset_index(drop=True)
+# Define thresholds for pass detection and deflection detection
+velocity_threshold = 300.0  # Example: Velocity threshold in pixels/sec
+acceleration_threshold = 3000  # Example: Acceleration threshold in pixels/sec^2
+change_threshold = 0.0  # Example: Change in direction (in pixels/sec)
+deflection_velocity_threshold = -300  # Large negative velocity change indicating a deflection
+deflection_acceleration_threshold = -4000  # Large negative acceleration change indicating a deflection
+deflection_duration = 3  # How long the negative velocity change must persist to be considered a deflection
 
-# Remove rows where X or Y is NaN (if necessary)
-df = df.dropna(subset=["X", "Y"])
+# Initialize lists to store pass events and deflections
+pass_events = []
+deflection_events = []
+pass_frames = []  # List to store corresponding frame numbers
+deflection_frames = []  # List to store deflection frame numbers
 
-# Compute displacement vectors (difference in positions)
-df["DX"] = df["X"].diff()
-df["DY"] = df["Y"].diff()
-
-# Compute frame differences & time differences
-df["Frame_Diff"] = df["Frame"].diff()
-frame_time = 1 / 25  # Assuming 30 FPS, change to your frame rate if different
-df["Time_Diff"] = df["Frame_Diff"] * frame_time
-
-# Remove NaN values (to avoid issues in calculations)
-df = df.dropna(subset=["Time_Diff"])
-
-# Compute displacement (distance traveled)
-df["Displacement"] = (df["DX"]**2 + df["DY"]**2) ** 0.5
-
-# Compute velocity (pixels per second)
-df["Velocity"] = df["Displacement"] / df["Time_Diff"]
-
-# --- Remove Outliers ---
-velocity_threshold = 1000  # Example threshold in pixels per second
-df_filtered = df[df["Velocity"] < velocity_threshold]
-
-# Alternatively, using IQR (Interquartile Range) to filter out outliers
-Q1 = df["Velocity"].quantile(0.25)
-Q3 = df["Velocity"].quantile(0.75)
-IQR = Q3 - Q1
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
-
-df_filtered = df_filtered[(df_filtered["Velocity"] >= lower_bound) & (df_filtered["Velocity"] <= upper_bound)]
-df_filtered["Frame"] = df_filtered["Frame"] / 25
-
-# --- Apply Moving Average (Last 10 Frames) ---
-df_filtered["Velocity_MA"] = df_filtered["Velocity"].ewm(span=10, adjust=False).mean()
-
-# Detect Passes
-def detect_passes(df):
-    passes = []
-    last_pass_frame = None  # Store the frame of the last detected pass to avoid duplicates
-    for i in range(1, len(df)):
-        # Pass detection criteria:
-        if (df["Velocity"].iloc[i] >= 50) and \
-           (df["Displacement"].iloc[i] >= 10) and \
-           (df["Time_Diff"].iloc[i] <= 0.05):  # Adjust criteria as needed
-            # Ensure this is the first frame of the pass (avoid duplicate lines)
-            if last_pass_frame is None or df["Frame"].iloc[i] > last_pass_frame + 1:
-                passes.append(df.iloc[i])
-                last_pass_frame = df["Frame"].iloc[i]  # Update the last detected pass frame
+# Loop through the data and detect passes and deflections
+for i in range(1, len(df)):
+    # Detect large negative spikes in velocity or acceleration (potential deflection)
+    if df['velocity'][i] < deflection_velocity_threshold or df['acceleration'][i] < deflection_acceleration_threshold:
+        # Check if the negative spike is significant (indicating a deflection)
+        deflection_events.append(df['time_seconds'][i])  # Store the time when a deflection was detected
+        deflection_frames.append(df['frame'][i])  # Store the corresponding frame number
+        continue  # Skip this iteration as it's a deflection, not a pass
     
-    return pd.DataFrame(passes)
+    # Detect a pass (significant positive change in velocity or acceleration)
+    if df['velocity'][i] > velocity_threshold and df['acceleration'][i] > acceleration_threshold:
+        # Detect a significant change in direction or velocity (change from the previous point)
+        if abs(df['Vx'][i] - df['Vx'][i-1]) > change_threshold or abs(df['Vy'][i] - df['Vy'][i-1]) > change_threshold:
+            # Check if the previous point wasn't also part of a pass (avoid duplicate detection)
+            if (i == 1) or (df['velocity'][i-1] <= velocity_threshold or df['acceleration'][i-1] <= acceleration_threshold):
+                pass_events.append(df['time_seconds'][i])  # Store the time (in seconds) when a pass started
+                pass_frames.append(df['frame'][i])  # Store the corresponding frame number
 
-# Detect passes based on the criteria
-df["Frame"] = df["Frame"] / 25
-passes_df = detect_passes(df[:500])
+# Print detected pass events (time in seconds) and corresponding frames
+print(f"Pass events detected at times (seconds): {pass_events}")
+print(f"Corresponding frames for passes: {pass_frames}")
+print(f"Deflection events detected at times (seconds): {deflection_events}")
+print(f"Corresponding frames for deflections: {deflection_frames}")
 
-# Detect Passes Received
-def detect_passes_received(df, passes_df):
-    received_passes = []
-    reception_threshold = 50  # Velocity drop threshold (adjustable)
-    distance_threshold = 5  # Low distance threshold for pass reception (adjustable)
-    
-    for pass_frame in passes_df["Frame"]:
-        # Find the index of the detected pass
-        pass_idx = df[df["Frame"] == pass_frame].index[0]
-        
-        # Check subsequent frames for velocity drop and small displacement (indicating reception)
-        for i in range(pass_idx + 1, len(df)):
-            if df["Velocity"].iloc[i] > reception_threshold and df["Displacement"].iloc[i] < distance_threshold:
-                received_passes.append(df.iloc[i])
-                break  # Stop after detecting the first reception event
-    
-    return pd.DataFrame(received_passes)
+# Plotting the velocity, acceleration, and detected passes
+plt.figure(figsize=(14, 8))
 
-# Detect passes received based on the ball slowing down significantly after a pass
-df_received_passes = detect_passes_received(df[:500], passes_df[:500])
+# Plot velocity
+plt.subplot(3, 1, 1)
+plt.plot(df['time_seconds'], df['velocity'], color='b', label="Velocity (pixels/sec)")
+plt.title('Velocity of Object Over Time')
+plt.xlabel('Time (seconds)')
+plt.ylabel('Velocity (pixels/sec)')
+plt.grid(True)
+plt.legend()
 
-# Plot the filtered velocity data with moving average
-plt.figure(figsize=(20, 5))
-plt.plot(df_filtered["Frame"][:500], df_filtered["Velocity"][:500], label="Velocity (pixels/s)", color="r", alpha=0.5)
-plt.plot(df_filtered["Frame"][:500], df_filtered["Velocity_MA"][:500], label="Velocity (pixels/s)", color="y", alpha=0.5)
-# Highlight the detected passes with vertical lines
-for pass_frame in passes_df["Frame"]:
-    plt.axvline(x=pass_frame, color='blue', linestyle='--', label="Pass Event", linewidth=2)
+# Plot acceleration
+plt.subplot(3, 1, 2)
+plt.plot(df['time_seconds'], df['acceleration'], color='r', label="Acceleration (pixels/sec^2)")
+plt.title('Acceleration of Object Over Time')
+plt.xlabel('Time (seconds)')
+plt.ylabel('Acceleration (pixels/sec^2)')
+plt.grid(True)
+plt.legend()
 
-# Highlight the detected pass receptions with vertical lines
-for received_frame in df_received_passes["Frame"]:
-    plt.axvline(x=received_frame, color='green', linestyle='--', label="Pass Received", linewidth=2)
+# Plot passes on velocity graph
+plt.subplot(3, 1, 3)
+plt.plot(df['time_seconds'], df['velocity'], color='b', label="Velocity (pixels/sec)")
+plt.scatter(pass_events, [df.loc[df['time_seconds'] == time, 'velocity'].values[0] for time in pass_events],
+            color='g', label="Detected Passes", zorder=5)  # Plot only detected passes as green dots
+plt.scatter(deflection_events, [df.loc[df['time_seconds'] == time, 'velocity'].values[0] for time in deflection_events],
+            color='r', label="Deflections", zorder=5)  # Plot deflections as red dots
+plt.title('Velocity of Object with Detected Passes and Deflections')
+plt.xlabel('Time (seconds)')
+plt.ylabel('Velocity (pixels/sec)')
+plt.grid(True)
+plt.legend()
 
-# Add labels and title
-plt.xlabel("Frame Number")
-plt.ylabel("Velocity (pixels/s)")
-plt.title("Football Velocity Over Time (Cleaned, Outliers Removed, and Moving Average Applied)")
+# Save the plot as a PNG file
+plt.tight_layout()
+plt.savefig('velocity_acceleration_pass_deflection_plot.png')  # Save as 'velocity_acceleration_pass_deflection_plot.png'
 
-# Add x-ticks for better visibility
-#x_ticks = np.arange(df_filtered["Frame"].min(), df_filtered["Frame"].max(), step=4)
-#plt.xticks(x_ticks)
-
-# Show the legend and grid
-plt.grid()
-
-# Save the plot
-plt.savefig("velocity_plot_with_passes.png", dpi=300)  # High-resolution save
+# Optionally, show the plot
 plt.show()
 
-print("Plot saved as velocity_plot_with_passes.png")
+# OpenCV: Extract frames from video for detected passes
+# Initialize OpenCV video capture object
+cap = cv2.VideoCapture(video_file_path)
+
+# Check if video opened successfully
+if not cap.isOpened():
+    print("Error: Could not open video.")
+    exit()
+
+# Get video frame rate (fps) and total frame count
+fps = cap.get(cv2.CAP_PROP_FPS)
+frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+# Define the directory to save extracted frames
+output_dir = './extracted_frames/'
+os.makedirs(output_dir, exist_ok=True)
+
+# Loop through the pass events (frame numbers) and extract those frames
+for pass_frame in pass_frames:
+    if pass_frame <= frame_count:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, pass_frame)  # Set the video to the desired frame
+        ret, frame = cap.read()  # Read the frame
+        if ret:
+            # Save the frame as an image
+            output_file = os.path.join(output_dir, f"pass_frame_{pass_frame}.png")
+            cv2.imwrite(output_file, frame)
+            print(f"Frame {pass_frame} extracted and saved to {output_file}")
+        else:
+            print(f"Error: Could not read frame {pass_frame}")
+    else:
+        print(f"Warning: Frame {pass_frame} exceeds video frame count")
+
+# Release the video capture object
+cap.release()
+
+plt.figure(figsize=(10, 6))
+
+# Flip Y axis if needed depending on your coordinate system
+plt.gca().invert_yaxis()  # Optional, depending on how your Y data behaves
+
+# Plot the trajectory
+plt.plot(df['bb_left'], df['bb_top'], color='blue', linewidth=2, label='Ball trajectory')
+
+# Plot pass events
+pass_x = df.loc[df['frame'].isin(pass_frames), 'bb_left']
+pass_y = df.loc[df['frame'].isin(pass_frames), 'bb_top']
+plt.scatter(pass_x, pass_y, color='green', s=100, label='Pass events', zorder=5)
+
+# Plot deflection events
+deflection_x = df.loc[df['frame'].isin(deflection_frames), 'bb_left']
+deflection_y = df.loc[df['frame'].isin(deflection_frames), 'bb_top']
+plt.scatter(deflection_x, deflection_y, color='red', s=100, label='Deflection events', zorder=5)
+
+# Add arrows to show direction (optional, for some key frames)
+for i in range(1, len(df), 10):  # Every 10 frames for clarity
+    plt.arrow(df['bb_left'][i-1], df['bb_top'][i-1],
+              df['bb_left'][i] - df['bb_left'][i-1],
+              df['bb_top'][i] - df['bb_top'][i-1],
+              head_width=5, head_length=5, fc='gray', ec='gray', alpha=0.5)
+
+# Plot start and end points
+plt.scatter(df['bb_left'].iloc[0], df['bb_top'].iloc[0], color='yellow', s=150, marker='*', label='Start', zorder=5)
+plt.scatter(df['bb_left'].iloc[-1], df['bb_top'].iloc[-1], color='black', s=150, marker='X', label='End', zorder=5)
+
+# Field layout (example dimensions)
+plt.title('Ball Trajectory - Top-Down View')
+plt.xlabel('X Position (pixels)')
+plt.ylabel('Y Position (pixels)')
+plt.legend()
+plt.grid(True)
+
+# Optionally, set axis limits based on video resolution or field size
+plt.xlim(0, df['bb_left'].max() + 50)
+plt.ylim(0, df['bb_top'].max() + 50)
+
+plt.tight_layout()
+plt.savefig('ball_trajectory_field_view.png')
+plt.show()
